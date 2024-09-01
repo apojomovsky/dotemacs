@@ -28,5 +28,18 @@
   :config
   (load-theme 'sanityinc-tomorrow-night t))
 
+;; Load and configure rust-mode using use-package
+(use-package rust-mode
+  :ensure t
+  :config
+  (setq rust-format-on-save t) ; Automatically format on save
+  (add-hook 'rust-mode-hook
+            (lambda () (setq indent-tabs-mode nil)))) ; Use spaces for indentation
+
 ;; Enable line numbers globally
 (global-display-line-numbers-mode t)
+
+;; Make emacs slient
+(setq ring-bell-function 'ignore)  ; Disable the bell sound
+(setq visible-bell nil)            ; Disable the visible bell (flashing screen)
+
