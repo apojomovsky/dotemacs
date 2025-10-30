@@ -1,45 +1,132 @@
-;; Initialize package sources
+;;; init.el --- Emacs configuration file
+;;; Commentary:
+;;; This file is organized into sections for better readability and maintenance.
+
+;;; 0. Package Management ---
 (require 'package)
-
-;; Add MELPA to the list of package archives if it's not already there
-(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
-
-;; Initialize the package system
+(setq package-archives '(("melpa" . "https://melpa.org/packages/")
+                         ("gnu" . "https://elpa.gnu.org/packages/")))
 (package-initialize)
 
-;; Refresh package contents if the archives are empty
-(unless package-archive-contents
-  (package-refresh-contents))
-
-;; Install use-package if it's not already installed
 (unless (package-installed-p 'use-package)
+  (package-refresh-contents)
   (package-install 'use-package))
 
-;; Ensure use-package is always installed
 (require 'use-package)
 (setq use-package-always-ensure t)
 
-;; Install and configure Magit using use-package
-(use-package magit
-  :bind (("C-x g" . magit-status)))
-
-;; Install and configure color-theme-sanityinc-tomorrow using use-package
-(use-package color-theme-sanityinc-tomorrow
-  :config
-  (load-theme 'sanityinc-tomorrow-night t))
-
-;; Load and configure rust-mode using use-package
-(use-package rust-mode
+;;; 1. Appearance ---
+(use-package doom-themes
   :ensure t
   :config
-  (setq rust-format-on-save t) ; Automatically format on save
-  (add-hook 'rust-mode-hook
-            (lambda () (setq indent-tabs-mode nil)))) ; Use spaces for indentation
+  (setq doom-themes-enable-bold t
+        doom-themes-enable-italic t)
+  (load-theme 'doom-bluloco-dark t)
+  (doom-themes-visual-bell-config)
+  (doom-themes-org-config))
 
-;; Enable line numbers globally
-(global-display-line-numbers-mode t)
+(use-package nerd-icons)
 
-;; Make emacs slient
-(setq ring-bell-function 'ignore)  ; Disable the bell sound
-(setq visible-bell nil)            ; Disable the visible bell (flashing screen)
+(use-package all-the-icons)
 
+;;; 2. Completion ---
+(use-package vertico
+  :config
+  (vertico-mode))
+
+(use-package corfu
+  :config
+  (global-corfu-mode))
+
+(use-package consult)
+
+(use-package marginalia
+  :config
+  (marginalia-mode))
+
+(use-package embark-consult
+  :ensure t
+  :after (consult embark))
+
+(use-package embark
+  :after consult)
+
+;;; 3. Project Management ---
+(use-package projectile
+  :diminish projectile-mode
+  :bind (("s-p" . projectile-command-map)
+         ("C-c p" . projectile-command-map))
+  :config
+  (projectile-mode +1)
+  (setq projectile-project-root-files
+        (append '("CMakeLists.txt") projectile-project-root-files))
+  (setq projectile-ignored-projects '("~/")))
+
+(use-package treemacs
+  :ensure t)
+
+;;; 4. Language Support ---
+;;; C++ Configuration
+(use-package eglot
+  :hook (c++-mode . eglot-ensure)
+  :config
+  (setq eglot-server-programs '((c++-mode . ("clangd")))))
+
+(use-package c-ts-mode
+  :mode "\.cpp\'" "\.h\'" "\.cc\'"
+  :config
+  (add-to-list 'major-mode-remap-alist '(c++-mode . c++-ts-mode))
+  (add-to-list 'major-mode-remap-alist '(c-mode . c-ts-mode)))
+
+(use-package apheleia
+  :config
+  (apheleia-global-mode +1)
+  (setf (alist-get 'c++-ts-mode apheleia-formatters) '("clang-format"))
+  (setf (alist-get 'c-ts-mode apheleia-formatters) '("clang-format")))
+
+;;; 5. Debugging ---
+(use-package dap-mode
+  :after (treemacs)
+  :config
+  (require 'dap-cpptools)
+  (require 'dap-ui)
+  (dap-ui-mode 1)
+  (require 'dap-variables)
+
+  (dap-register-debug-template
+   "My C++ Project"
+   (list :type "cppdbg"
+         :request "launch"
+         :name "My C++ Project::Launch"
+         :MIMode "gdb"
+         :program "${workspaceFolder}/build/my_executable"
+         :args '()
+         :cwd "${workspaceFolder}")))
+
+;;; 6. Version Control ---
+(use-package magit
+  :commands magit-status)
+
+;;; 7. Utilities ---
+(use-package default-text-scale
+  :config
+  (default-text-scale-mode))
+
+;;; 8. Frame Configuration ---
+(defun maximize-frame ()
+  "Maximize the frame."
+  (modify-frame-parameters nil '((fullscreen . maximized))))
+
+(add-hook 'after-make-frame-functions
+          (lambda (frame)
+            (with-selected-frame frame
+              (maximize-frame))))
+
+(add-hook 'emacs-startup-hook 'maximize-frame)
+
+
+;;; 9. Startup Configuration ---
+(setq inhibit-startup-screen t)
+
+
+;;; End of init.el
