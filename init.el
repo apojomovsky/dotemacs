@@ -162,4 +162,56 @@
   :config
   (evil-commentary-mode 1))
 
+;;; 11. Terminal mouse support ---
+(defun my-enable-mouse-in-tty (frame)
+  "Enable mouse support when FRAME is a terminal frame."
+  (unless (display-graphic-p frame)
+    (with-selected-frame frame
+      (xterm-mouse-mode 1)     ;; basic mouse in terminal
+      (mouse-wheel-mode 1))))  ;; enable wheel events if available
+
+;; For daemon or new frames
+(add-hook 'after-make-frame-functions #'my-enable-mouse-in-tty)
+
+;; For the current frame when starting directly in a terminal
+(unless (display-graphic-p)
+  (xterm-mouse-mode 1)
+  (mouse-wheel-mode 1))
+
+;;; 12. Terminal: vterm ---
+(use-package vterm
+  :commands (vterm vterm-other-window)
+  :custom
+  (vterm-max-scrollback 10000)
+  (vterm-always-compile-module t)
+  (vterm-shell (or (getenv "SHELL") "/bin/bash"))
+  :hook
+  (vterm-mode . (lambda ()
+                  (display-line-numbers-mode 0)
+                  (setq-local global-hl-line-mode nil)))
+  :bind
+  (("C-c t" . vterm-bottom)))  ;; new keybind
+
+;; Helper: find project root via Projectile, else project.el, else current dir
+(defun my/project-root ()
+  (or (and (fboundp 'projectile-project-root)
+           (projectile-project-p)
+           (projectile-project-root))
+      (when-let ((proj (project-current)))
+        (car (project-roots proj)))
+      default-directory))
+
+(defun vterm-bottom ()
+  "Open vterm at the project root in a bottom split, about one third of the frame."
+  (interactive)
+  (let* ((root (my/project-root))
+         (total (window-total-height))
+         (height (max 10 (floor (* total 0.33))))
+         (win (split-window (selected-window) (- total height))))
+    (select-window win)
+    (let ((default-directory root))
+      ;; Optional pretty buffer name: *vterm project*
+      (vterm (format "*vterm %s*"
+                     (file-name-nondirectory (directory-file-name root)))))))
+
 ;;; End of init.el
