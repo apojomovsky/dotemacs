@@ -112,6 +112,15 @@
   :config
   (default-text-scale-mode))
 
+;; Line numbers in all buffers
+(setq display-line-numbers-type t)
+(global-display-line-numbers-mode 1)
+
+;; Optional: turn them off in terminals or shells
+(dolist (mode '(term-mode eshell-mode shell-mode vterm-mode))
+  (add-hook (intern (format "%s-hook" mode))
+            (lambda () (display-line-numbers-mode 0))))
+
 ;;; 8. Frame Configuration ---
 (defun maximize-frame ()
   "Maximize the frame."
@@ -128,5 +137,29 @@
 ;;; 9. Startup Configuration ---
 (setq inhibit-startup-screen t)
 
+;;; 10. Modal Editing ---
+(use-package evil
+  :init
+  (setq evil-want-integration t      ;; integrate with core Emacs features
+        evil-want-keybinding nil     ;; let evil-collection handle bindings
+        evil-want-C-u-scroll t       ;; C-u scrolls up
+        evil-want-C-i-jump t)        ;; keep TAB jump behavior
+  :config
+  (evil-mode 1))
+
+(use-package evil-collection
+  :after evil
+  :config
+  (evil-collection-init))
+
+(use-package evil-surround
+  :after evil
+  :config
+  (global-evil-surround-mode 1))
+
+(use-package evil-commentary
+  :after evil
+  :config
+  (evil-commentary-mode 1))
 
 ;;; End of init.el
