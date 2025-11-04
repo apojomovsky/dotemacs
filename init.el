@@ -214,4 +214,15 @@
       (vterm (format "*vterm %s*"
                      (file-name-nondirectory (directory-file-name root)))))))
 
+;;; 14. CMake highlighting with cmake-font-lock
+
+;; Force classic cmake-mode for CMake files, since cmake-font-lock hooks into it
+(use-package cmake-mode
+  :mode ("CMakeLists\\.txt\\'" "\\.cmake\\'"))
+
+;; Extra highlighting for commands, vars, properties, generator expressions
+(use-package cmake-font-lock
+  :after cmake-mode
+  :hook (cmake-mode . cmake-font-lock-activate))
+
 ;;; End of init.el
