@@ -67,10 +67,24 @@
 
 ;;; 4. Language Support ---
 ;;; C++ Configuration
-(use-package eglot
-  :hook (c++-mode . eglot-ensure)
+(use-package lsp-mode
+  :ensure t
+  ;; We removed the :hook line
   :config
-  (setq eglot-server-programs '((c++-mode . ("clangd")))))
+  (setq lsp-auto-guess-root t)
+
+  ;; This is the new, correct way to add the hook:
+  ;; "Wait until the 'c-ts-mode' package has actually loaded,
+  ;; THEN add these hooks."
+  (with-eval-after-load 'c-ts-mode
+    (add-hook 'c++-ts-mode-hook #'lsp)
+    (add-hook 'c-ts-mode-hook #'lsp)))
+
+(use-package lsp-ui
+  :ensure t
+  :after lsp-mode
+  ;; :commands line was REMOVED here too
+  :hook (lsp-mode-hook . lsp-ui-mode))
 
 ;; Set tree-sitter sources for C/C++
 (setq treesit-language-source-alist
@@ -80,8 +94,15 @@
                 "master" "src"))))
 
 (use-package c-ts-mode
-  :mode "\.cpp\'" "\.h\'" "\.cc\'"
+  :ensure t
+  ;; Directly map file extensions to the correct major mode
+  :mode (("\\.c\\'" . c-ts-mode)        ; C files -> c-ts-mode
+         ("\\.cpp\\'" . c++-ts-mode)   ; C++ files -> c++-ts-mode
+         ("\\.cc\\'" . c++-ts-mode)   ; C++ files -> c++-ts-mode
+         ("\\.h\\'" . c++-ts-mode))   ; Headers -> c++-ts-mode (assuming C++)
+
   :config
+  ;; Keep the remaps as a fallback, it's good practice
   (add-to-list 'major-mode-remap-alist '(c++-mode . c++-ts-mode))
   (add-to-list 'major-mode-remap-alist '(c-mode . c-ts-mode)))
 
