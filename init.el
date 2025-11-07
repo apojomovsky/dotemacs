@@ -72,6 +72,13 @@
   :config
   (setq eglot-server-programs '((c++-mode . ("clangd")))))
 
+;; Set tree-sitter sources for C/C++
+(setq treesit-language-source-alist
+      '((c . ("https://github.com/tree-sitter/tree-sitter-c"
+              "master" "src"))
+        (cpp . ("https://github.com/tree-sitter/tree-sitter-cpp"
+                "master" "src"))))
+
 (use-package c-ts-mode
   :mode "\.cpp\'" "\.h\'" "\.cc\'"
   :config
@@ -132,7 +139,6 @@
               (maximize-frame))))
 
 (add-hook 'emacs-startup-hook 'maximize-frame)
-
 
 ;;; 9. Startup Configuration ---
 (setq inhibit-startup-screen t)
@@ -214,15 +220,14 @@
       (vterm (format "*vterm %s*"
                      (file-name-nondirectory (directory-file-name root)))))))
 
-;;; 14. CMake highlighting with cmake-font-lock
+;;; 14. Various highlighting modes
 
 ;; Force classic cmake-mode for CMake files, since cmake-font-lock hooks into it
 (use-package cmake-mode
   :mode ("CMakeLists\\.txt\\'" "\\.cmake\\'"))
 
-;; Extra highlighting for commands, vars, properties, generator expressions
-(use-package cmake-font-lock
-  :after cmake-mode
-  :hook (cmake-mode . cmake-font-lock-activate))
+(use-package yaml-mode
+  :ensure t
+  :mode (("\\.[Yy][Aa]?[Mm][Ll]\\'" . yaml-mode)))
 
 ;;; End of init.el
